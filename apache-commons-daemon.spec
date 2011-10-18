@@ -3,8 +3,8 @@
 %global short_name  commons-%{base_name}
 
 Name:           apache-%{short_name}
-Version:        1.0.5
-Release:        3
+Version:        1.0.7
+Release:        1
 Summary:        Defines API to support an alternative invocation mechanism
 License:        ASL 2.0
 Group:          System/Base
@@ -65,7 +65,7 @@ Obsoletes:      jakarta-%{short_name}-javadoc <= 1.0.1
 %setup -q -n %{short_name}-%{version}-src
 %patch0 -p1 -b .execve
 %patch1 -p1 -b .ppc
-%patch2 -p1 -b .s390
+# %%patch2 -p1 -b .s390 <- needs a rediff, or nuke it?
 
 # remove java binaries from sources
 rm -rf src/samples/build/

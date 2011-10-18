@@ -14,15 +14,15 @@ Patch0:         0001-execve-path-warning.patch
 Patch1:         0002-ppc64-configure.patch
 Patch2:         0003-s390x-configure.patch
 BuildRequires:  java-devel >= 0:1.6.0
-BuildRequires:  jpackage-utils
+BuildRequires:  jpackage-utils >= 0:1.7.5
 BuildRequires:  maven
 BuildRequires:  apache-commons-parent
 BuildRequires:  xmlto
 
 Requires:         java >= 0:1.6.0
-Requires:         jpackage-utils
-Requires(post):   jpackage-utils
-Requires(postun): jpackage-utils
+Requires:         jpackage-utils >= 0:1.7.5
+Requires(post):   jpackage-utils >= 0:1.7.5
+Requires(postun): jpackage-utils >= 0:1.7.5
 
 
 # This should go away with F-17
@@ -52,7 +52,7 @@ Obsoletes:      jakarta-%{short_name}-jsvc <= 1.0.1
 %package        javadoc
 Summary:        API documentation for %{name}
 Group:          Development/Java
-Requires:       jpackage-utils
+Requires:       jpackage-utils >= 0:1.7.5
 BuildArch:      noarch
 
 Obsoletes:      jakarta-%{short_name}-javadoc <= 1.0.1

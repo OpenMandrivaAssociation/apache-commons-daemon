@@ -3,8 +3,8 @@
 %global short_name  commons-%{base_name}
 
 Name:           apache-%{short_name}
-Version:        1.0.7
-Release:        1
+Version:        1.0.5
+Release:        3
 Summary:        Defines API to support an alternative invocation mechanism
 License:        ASL 2.0
 Group:          System/Base
@@ -14,15 +14,15 @@ Patch0:         0001-execve-path-warning.patch
 Patch1:         0002-ppc64-configure.patch
 Patch2:         0003-s390x-configure.patch
 BuildRequires:  java-devel >= 0:1.6.0
-BuildRequires:  jpackage-utils >= 0:1.7.5
+BuildRequires:  jpackage-utils
 BuildRequires:  maven
 BuildRequires:  apache-commons-parent
 BuildRequires:  xmlto
 
 Requires:         java >= 0:1.6.0
-Requires:         jpackage-utils >= 0:1.7.5
-Requires(post):   jpackage-utils >= 0:1.7.5
-Requires(postun): jpackage-utils >= 0:1.7.5
+Requires:         jpackage-utils
+Requires(post):   jpackage-utils
+Requires(postun): jpackage-utils
 
 
 # This should go away with F-17
@@ -52,7 +52,7 @@ Obsoletes:      jakarta-%{short_name}-jsvc <= 1.0.1
 %package        javadoc
 Summary:        API documentation for %{name}
 Group:          Development/Java
-Requires:       jpackage-utils >= 0:1.7.5
+Requires:       jpackage-utils
 BuildArch:      noarch
 
 Obsoletes:      jakarta-%{short_name}-javadoc <= 1.0.1
@@ -65,7 +65,7 @@ Obsoletes:      jakarta-%{short_name}-javadoc <= 1.0.1
 %setup -q -n %{short_name}-%{version}-src
 %patch0 -p1 -b .execve
 %patch1 -p1 -b .ppc
-# %%patch2 -p1 -b .s390 <- needs a rediff, or nuke it?
+%patch2 -p1 -b .s390
 
 # remove java binaries from sources
 rm -rf src/samples/build/

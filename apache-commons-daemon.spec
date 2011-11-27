@@ -4,7 +4,7 @@
 
 Name:           apache-%{short_name}
 Version:        1.0.5
-Release:        3
+Release:        5
 Summary:        Defines API to support an alternative invocation mechanism
 License:        ASL 2.0
 Group:          System/Base

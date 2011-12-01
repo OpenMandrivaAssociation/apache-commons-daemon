@@ -84,7 +84,7 @@ make %{?_smp_mflags}
 popd
 
 # build jars
-mvn-local install javadoc:javadoc
+mvn-rpmbuild install javadoc:javadoc
 
 
 

@@ -15,6 +15,7 @@ Patch1:         0002-ppc64-configure.patch
 BuildRequires:  java-devel >= 0:1.6.0
 BuildRequires:  jpackage-utils
 BuildRequires:  maven
+BuildRequires:  java-rpmbuild
 BuildRequires:  apache-commons-parent
 BuildRequires:  xmlto
 

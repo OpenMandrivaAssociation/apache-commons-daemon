@@ -3,8 +3,8 @@
 %global short_name  commons-%{base_name}
 
 Name:           apache-%{short_name}
-Version:        1.0.5
-Release:        5
+Version:        1.0.7
+Release:        1
 Summary:        Defines API to support an alternative invocation mechanism
 License:        ASL 2.0
 Group:          System/Base
@@ -12,7 +12,6 @@ URL:            http://commons.apache.org/%{base_name}
 Source0:        http://archive.apache.org/dist/commons/%{base_name}/source/%{short_name}-%{version}-src.tar.gz
 Patch0:         0001-execve-path-warning.patch
 Patch1:         0002-ppc64-configure.patch
-Patch2:         0003-s390x-configure.patch
 BuildRequires:  java-devel >= 0:1.6.0
 BuildRequires:  jpackage-utils
 BuildRequires:  maven
@@ -65,7 +64,6 @@ Obsoletes:      jakarta-%{short_name}-javadoc <= 1.0.1
 %setup -q -n %{short_name}-%{version}-src
 %patch0 -p1 -b .execve
 %patch1 -p1 -b .ppc
-%patch2 -p1 -b .s390
 
 # remove java binaries from sources
 rm -rf src/samples/build/

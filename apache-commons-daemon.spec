@@ -91,16 +91,16 @@ mvn-local install javadoc:javadoc
 %install
 
 # install native jsvc
-install -Dpm 755 src/native/unix/jsvc $RPM_BUILD_ROOT%{_bindir}/jsvc
-install -Dpm 644 src/native/unix/jsvc.1 $RPM_BUILD_ROOT%{_mandir}/man1/jsvc.1
+install -Dpm 755 src/native/unix/jsvc %{buildroot}%{_bindir}/jsvc
+install -Dpm 644 src/native/unix/jsvc.1 %{buildroot}%{_mandir}/man1/jsvc.1
 
 # jars
-install -Dpm 644 target/%{short_name}-%{version}.jar $RPM_BUILD_ROOT%{_javadir}/%{name}.jar
+install -Dpm 644 target/%{short_name}-%{version}.jar %{buildroot}%{_javadir}/%{name}.jar
 ln -sf %{name}.jar %{buildroot}%{_javadir}/%{short_name}.jar
 
 
 # pom
-install -Dpm 644 pom.xml $RPM_BUILD_ROOT%{_mavenpomdir}/JPP-%{short_name}.pom
+install -Dpm 644 pom.xml %{buildroot}%{_mavenpomdir}/JPP-%{short_name}.pom
 %add_to_maven_depmap org.apache.commons %{short_name} %{version} JPP %{short_name}
 
 # following line is only for backwards compatibility. New packages
@@ -108,8 +108,8 @@ install -Dpm 644 pom.xml $RPM_BUILD_ROOT%{_mavenpomdir}/JPP-%{short_name}.pom
 %add_to_maven_depmap %{short_name} %{short_name} %{version} JPP %{short_name}
 
 # javadoc
-install -d -m 755 $RPM_BUILD_ROOT%{_javadocdir}/%{name}
-cp -pr target/site/apidocs/* $RPM_BUILD_ROOT%{_javadocdir}/%{name}
+install -d -m 755 %{buildroot}%{_javadocdir}/%{name}
+cp -pr target/site/apidocs/* %{buildroot}%{_javadocdir}/%{name}
 
 %pre javadoc
 # workaround for rpm bug, can be removed in F-17

@@ -5,6 +5,7 @@
 Name:           apache-%{short_name}
 Version:        1.0.7
 Release:        1
+Epoch:          1
 Summary:        Defines API to support an alternative invocation mechanism
 License:        ASL 2.0
 Group:          System/Base
@@ -18,6 +19,7 @@ BuildRequires:  maven
 BuildRequires:  java-rpmbuild
 BuildRequires:  apache-commons-parent
 BuildRequires:  xmlto
+BuildRequires:  java-rpmbuild
 
 Requires:         java >= 0:1.6.0
 Requires:         jpackage-utils

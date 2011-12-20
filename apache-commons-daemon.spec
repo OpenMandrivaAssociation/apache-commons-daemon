@@ -4,7 +4,7 @@
 
 Name:           apache-%{short_name}
 Version:        1.0.7
-Release:        1
+Release:        2
 Epoch:          1
 Summary:        Defines API to support an alternative invocation mechanism
 License:        ASL 2.0
@@ -28,8 +28,8 @@ Requires(postun): jpackage-utils
 
 
 # This should go away with F-17
-Provides:       jakarta-%{short_name} = %{version}-%{release}
-Obsoletes:      jakarta-%{short_name} <= 1.0.1
+Provides:       jakarta-%{short_name} = 1:%{version}-%{release}
+Obsoletes:      jakarta-%{short_name} <= 1:1.0.1
 
 
 %description
@@ -45,8 +45,8 @@ Summary:        Java daemon launcher
 Group:          System/Base
 Provides:       jsvc = %{version}-%{release}
 
-Provides:       jakarta-%{short_name}-jsvc = %{version}-%{release}
-Obsoletes:      jakarta-%{short_name}-jsvc <= 1.0.1
+Provides:       jakarta-%{short_name}-jsvc = 1:%{version}-%{release}
+Obsoletes:      jakarta-%{short_name}-jsvc <= 1:1.0.1
 
 %description    jsvc
 %{summary}.
@@ -57,7 +57,7 @@ Group:          Development/Java
 Requires:       jpackage-utils
 BuildArch:      noarch
 
-Obsoletes:      jakarta-%{short_name}-javadoc <= 1.0.1
+Obsoletes:      jakarta-%{short_name}-javadoc <= 1:1.0.1
 
 %description    javadoc
 %{summary}.

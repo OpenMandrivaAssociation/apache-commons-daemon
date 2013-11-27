@@ -3,7 +3,7 @@
 %global short_name  commons-%{base_name}
 
 Name:           apache-%{short_name}
-Version:        1.0.7
+Version:        1.0.15
 Release:        2
 Epoch:          1
 Summary:        Defines API to support an alternative invocation mechanism
@@ -11,26 +11,19 @@ License:        ASL 2.0
 Group:          System/Base
 URL:            http://commons.apache.org/%{base_name}
 Source0:        http://archive.apache.org/dist/commons/%{base_name}/source/%{short_name}-%{version}-src.tar.gz
-Patch0:         0001-execve-path-warning.patch
-Patch1:         0002-ppc64-configure.patch
+Source1:		m2-repo.tar.gz
 BuildRequires:  java-devel >= 0:1.6.0
 BuildRequires:  jpackage-utils
-BuildRequires:  maven
+BuildRequires:  maven2
 BuildRequires:  java-rpmbuild
 BuildRequires:  apache-commons-parent
 BuildRequires:  xmlto
-BuildRequires:  java-rpmbuild
 
 Requires:         java >= 0:1.6.0
 Requires:         jpackage-utils
 Requires(post):   jpackage-utils
 Requires(postun): jpackage-utils
-
-
-# This should go away with F-17
-Provides:       jakarta-%{short_name} = 1:%{version}-%{release}
-Obsoletes:      jakarta-%{short_name} <= 1:1.0.1
-
+%rename jakarta-%{short_name}
 
 %description
 The scope of this package is to define an API in line with the current
@@ -44,9 +37,7 @@ Java applications.
 Summary:        Java daemon launcher
 Group:          System/Base
 Provides:       jsvc = %{version}-%{release}
-
-Provides:       jakarta-%{short_name}-jsvc = 1:%{version}-%{release}
-Obsoletes:      jakarta-%{short_name}-jsvc <= 1:1.0.1
+%rename 	jakarta-%{short_name}-jsvc
 
 %description    jsvc
 %{summary}.
@@ -57,16 +48,17 @@ Group:          Development/Java
 Requires:       jpackage-utils
 BuildArch:      noarch
 
-Obsoletes:      jakarta-%{short_name}-javadoc <= 1:1.0.1
+%rename jakarta-%{short_name}-javadoc
 
 %description    javadoc
 %{summary}.
 
-
 %prep
 %setup -q -n %{short_name}-%{version}-src
-%patch0 -p1 -b .execve
-%patch1 -p1 -b .ppc
+
+export MAVEN_REPO_LOCAL=$(pwd)/.m2/repository
+mkdir -p $MAVEN_REPO_LOCAL
+tar -xf %{SOURCE1} -C $MAVEN_REPO_LOCAL
 
 # remove java binaries from sources
 rm -rf src/samples/build/
@@ -75,7 +67,6 @@ chmod 644 src/samples/*
 cd src/native/unix
 xmlto man man/jsvc.1.xml --skip-validation
 
-
 %build
 
 # build native jsvc
@@ -83,13 +74,13 @@ pushd src/native/unix
 %configure --with-java=%{java_home}
 # this is here because 1.0.2 archive contains old *.o
 make clean
-make %{?_smp_mflags}
+%make
 popd
 
 # build jars
-mvn-rpmbuild install javadoc:javadoc
-
-
+export MAVEN_REPO_LOCAL=$(pwd)/.m2/repository
+mvn -Dmaven.repo.local=$MAVEN_REPO_LOCAL \
+    install javadoc:javadoc
 
 %install
 
@@ -100,7 +91,6 @@ install -Dpm 644 src/native/unix/jsvc.1 %{buildroot}%{_mandir}/man1/jsvc.1
 # jars
 install -Dpm 644 target/%{short_name}-%{version}.jar %{buildroot}%{_javadir}/%{name}.jar
 ln -sf %{name}.jar %{buildroot}%{_javadir}/%{short_name}.jar
-
 
 # pom
 install -Dpm 644 pom.xml %{buildroot}%{_mavenpomdir}/JPP-%{short_name}.pom
@@ -119,7 +109,6 @@ cp -pr target/site/apidocs/* %{buildroot}%{_javadocdir}/%{name}
 [ $1 -gt 1 ] && [ -L %{_javadocdir}/%{name} ] && \
 rm -rf $(readlink -f %{_javadocdir}/%{name}) %{_javadocdir}/%{name} || :
 
-
 %post
 %update_maven_depmap
 
@@ -127,24 +116,18 @@ rm -rf $(readlink -f %{_javadocdir}/%{name}) %{_javadocdir}/%{name} || :
 %update_maven_depmap
 
 %files
-%defattr(-,root,root,-)
 %doc LICENSE.txt PROPOSAL.html NOTICE.txt RELEASE-NOTES.txt src/samples
 %doc src/docs/*
 %{_javadir}/*
 %{_mavenpomdir}/JPP-%{short_name}.pom
 %{_mavendepmapfragdir}/*
 
-
 %files jsvc
-%defattr(-,root,root,-)
 %doc LICENSE.txt
 %{_bindir}/jsvc
 %{_mandir}/man1/jsvc.1*
 
 
 %files javadoc
-%defattr(-,root,root,-)
 %doc %{_javadocdir}/%{name}
 %doc LICENSE.txt
-
-

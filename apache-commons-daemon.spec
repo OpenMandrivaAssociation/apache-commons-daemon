@@ -1,29 +1,29 @@
-
+%{?_javapackages_macros:%_javapackages_macros}
 %global base_name   daemon
 %global short_name  commons-%{base_name}
 
 Name:           apache-%{short_name}
 Version:        1.0.15
-Release:        2
-Epoch:          1
+Release:        4.0%{?dist}
 Summary:        Defines API to support an alternative invocation mechanism
 License:        ASL 2.0
-Group:          System/Base
+
 URL:            http://commons.apache.org/%{base_name}
 Source0:        http://archive.apache.org/dist/commons/%{base_name}/source/%{short_name}-%{version}-src.tar.gz
-Source1:		m2-repo.tar.gz
-BuildRequires:  java-devel >= 0:1.6.0
+Patch1:         apache-commons-daemon-JAVA_OS.patch
+# backport from https://fisheye6.atlassian.com/changelog/commons?cs=1458896
+Patch2:         apache-commons-daemon-secondary.patch
+BuildRequires:  maven-local
+BuildRequires:  java-devel >= 1:1.6.0
 BuildRequires:  jpackage-utils
-BuildRequires:  maven2
-BuildRequires:  java-rpmbuild
 BuildRequires:  apache-commons-parent
+BuildRequires:  maven-surefire-provider-junit
 BuildRequires:  xmlto
 
-Requires:         java >= 0:1.6.0
-Requires:         jpackage-utils
-Requires(post):   jpackage-utils
-Requires(postun): jpackage-utils
-%rename jakarta-%{short_name}
+
+Provides:       jakarta-%{short_name} = 1:%{version}-%{release}
+Obsoletes:      jakarta-%{short_name} <= 1:1.0.1
+
 
 %description
 The scope of this package is to define an API in line with the current
@@ -35,37 +35,40 @@ Java applications.
 
 %package        jsvc
 Summary:        Java daemon launcher
-Group:          System/Base
-Provides:       jsvc = %{version}-%{release}
-%rename 	jakarta-%{short_name}-jsvc
+
+Provides:       jsvc = 1:%{version}-%{release}
+
+Provides:       jakarta-%{short_name}-jsvc = 1:%{version}-%{release}
+Obsoletes:      jakarta-%{short_name}-jsvc <= 1:1.0.1
 
 %description    jsvc
 %{summary}.
 
 %package        javadoc
 Summary:        API documentation for %{name}
-Group:          Development/Java
+
 Requires:       jpackage-utils
 BuildArch:      noarch
 
-%rename jakarta-%{short_name}-javadoc
+Provides:       jakarta-%{short_name}-javadoc = 1:%{version}-%{release}
+Obsoletes:      jakarta-%{short_name}-javadoc <= 1:1.0.1
 
 %description    javadoc
 %{summary}.
 
+
 %prep
 %setup -q -n %{short_name}-%{version}-src
-
-export MAVEN_REPO_LOCAL=$(pwd)/.m2/repository
-mkdir -p $MAVEN_REPO_LOCAL
-tar -xf %{SOURCE1} -C $MAVEN_REPO_LOCAL
+%patch1 -p1 -b .java_os
+%patch2 -p1 -b .secondary
 
 # remove java binaries from sources
 rm -rf src/samples/build/
 
 chmod 644 src/samples/*
 cd src/native/unix
-xmlto man man/jsvc.1.xml --skip-validation
+xmlto man man/jsvc.1.xml
+
 
 %build
 
@@ -74,60 +77,166 @@ pushd src/native/unix
 %configure --with-java=%{java_home}
 # this is here because 1.0.2 archive contains old *.o
 make clean
-%make
+make %{?_smp_mflags}
 popd
 
 # build jars
-export MAVEN_REPO_LOCAL=$(pwd)/.m2/repository
-mvn -Dmaven.repo.local=$MAVEN_REPO_LOCAL \
-    install javadoc:javadoc
+%mvn_file  : %{short_name} %{name}
+%mvn_alias : org.apache.commons:%{short_name}
+%mvn_build
+
 
 %install
-
 # install native jsvc
-install -Dpm 755 src/native/unix/jsvc %{buildroot}%{_bindir}/jsvc
-install -Dpm 644 src/native/unix/jsvc.1 %{buildroot}%{_mandir}/man1/jsvc.1
+install -Dpm 755 src/native/unix/jsvc $RPM_BUILD_ROOT%{_bindir}/jsvc
+install -Dpm 644 src/native/unix/jsvc.1 $RPM_BUILD_ROOT%{_mandir}/man1/jsvc.1
 
-# jars
-install -Dpm 644 target/%{short_name}-%{version}.jar %{buildroot}%{_javadir}/%{name}.jar
-ln -sf %{name}.jar %{buildroot}%{_javadir}/%{short_name}.jar
+%mvn_install
 
-# pom
-install -Dpm 644 pom.xml %{buildroot}%{_mavenpomdir}/JPP-%{short_name}.pom
-%add_to_maven_depmap org.apache.commons %{short_name} %{version} JPP %{short_name}
 
-# following line is only for backwards compatibility. New packages
-# should use proper groupid org.apache.commons and also artifactid
-%add_to_maven_depmap %{short_name} %{short_name} %{version} JPP %{short_name}
-
-# javadoc
-install -d -m 755 %{buildroot}%{_javadocdir}/%{name}
-cp -pr target/site/apidocs/* %{buildroot}%{_javadocdir}/%{name}
-
-%pre javadoc
-# workaround for rpm bug, can be removed in F-17
-[ $1 -gt 1 ] && [ -L %{_javadocdir}/%{name} ] && \
-rm -rf $(readlink -f %{_javadocdir}/%{name}) %{_javadocdir}/%{name} || :
-
-%post
-%update_maven_depmap
-
-%postun
-%update_maven_depmap
-
-%files
+%files -f .mfiles
 %doc LICENSE.txt PROPOSAL.html NOTICE.txt RELEASE-NOTES.txt src/samples
 %doc src/docs/*
-%{_javadir}/*
-%{_mavenpomdir}/JPP-%{short_name}.pom
-%{_mavendepmapfragdir}/*
+
 
 %files jsvc
-%doc LICENSE.txt
+%doc LICENSE.txt NOTICE.txt
 %{_bindir}/jsvc
 %{_mandir}/man1/jsvc.1*
 
 
-%files javadoc
-%doc %{_javadocdir}/%{name}
-%doc LICENSE.txt
+%files javadoc -f .mfiles-javadoc
+%doc LICENSE.txt NOTICE.txt
+
+
+%changelog
+* Thu Sep 26 2013 Dan Horák <dan[at]danny.cz> - 1.0.15-4
+- add back support for secondary arches (s390x, ppc64)
+
+* Sat Aug 03 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.0.15-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_20_Mass_Rebuild
+
+* Fri Apr  5 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 1.0.15-2
+- Bump release number
+
+* Fri Apr  5 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 1.0.15-1
+- Update to upstream version 1.0.15
+- Remove 0001-execve-path-warning.patch (fixed upstream)
+- Remove patches for s390x and ppc64 (accepted upstream in DAEMON-289)
+
+* Wed Feb 13 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 1.0.13-1
+- Update to upstream version 1.0.13
+
+* Wed Feb 06 2013 Java SIG <java-devel@lists.fedoraproject.org> - 1.0.12-2
+- Update for https://fedoraproject.org/wiki/Fedora_19_Maven_Rebuild
+- Replace maven BuildRequires with maven-local
+
+* Thu Jan 24 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 1.0.12-1
+- Update to upstream version 1.0.12
+- Install NOTICE files
+
+* Tue Jan 15 2013 Michal Srb <msrb@redhat.com> - 1.0.11-2
+- Build with xmvn
+- Spec file cleanup
+
+* Tue Dec 11 2012 Mikolaj Izdebski <mizdebsk@redhat.com> - 1.0.11-1
+- Update to upstream version 1.0.11
+
+* Fri Aug 17 2012 Karsten Hopp <karsten@redhat.com> 1.0.10-5
+- add ppc64 as known arch
+
+* Wed Jul 18 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.0.10-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_18_Mass_Rebuild
+
+* Mon Apr 23 2012 Dan Horák <dan[at]danny.cz> - 1.0.10-3
+- add s390x as known arch
+
+* Thu Mar 29 2012 Dennis Gilmore <dennis@ausil.us> - 1.0.10-2
+- $supported_os and $JAVA_OS in configure do not always match 
+- on arches that override supported_os to be the arch we can not find headers
+
+* Thu Jan 26 2012 Stanislav Ochotnicky <sochotnicky@redhat.com> - 1.0.10-1
+- Update to latest upstream (1.0.10)
+- Several bugfixes concerning libcap and building upstream
+
+* Thu Jan 26 2012 Stanislav Ochotnicky <sochotnicky@redhat.com> - 1.0.8-1
+- Update to latest upstream (1.0.8)
+- Drop s390/ppc patches (upstream seems to already include them)
+
+* Thu Jan 12 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.0.7-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_17_Mass_Rebuild
+
+* Mon Aug 15 2011 Stanislav Ochotnicky <sochotnicky@redhat.com> - 1.0.7-1
+- Update to latest upstream (1.0.7)
+- Fix CVE-2011-2729
+
+* Wed Jul 20 2011 Stanislav Ochotnicky <sochotnicky@redhat.com> - 1.0.6-1
+- Update to latest upstream (1.0.6)
+- Cleanups according to new guidelines
+
+* Mon May  9 2011 Stanislav Ochotnicky <sochotnicky@redhat.com> - 1.0.5-5
+- Use mvn-rpmbuild instead of mvn-local (changes in maven)
+
+* Wed May  4 2011 Dan Horák <dan[at]danny.cz> - 1.0.5-4
+- updated the s390x patch
+
+* Mon Feb 07 2011 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.0.5-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_15_Mass_Rebuild
+
+* Tue Feb  1 2011 Stanislav Ochotnicky <sochotnicky@redhat.com> - 1.0.5-2
+- Fix bug 669259 (execve warning segfault)
+
+* Tue Jan 18 2011 Stanislav Ochotnicky <sochotnicky@redhat.com> - 1.0.5-1
+- Update to latest version
+- Use maven 3 to build
+- Versionless jars & javadocs
+- Use apache-commons-parent for BR
+
+* Tue Oct 26 2010 Chris Spike <chris.spike@arcor.de> 1.0.4-2
+- Added fix to remove java binaries from sources
+
+* Tue Oct 26 2010 Chris Spike <chris.spike@arcor.de> 1.0.4-1
+- Updated to 1.0.4
+
+* Fri Oct 22 2010 Chris Spike <chris.spike@arcor.de> 1.0.3-1
+- Updated to 1.0.3
+- Cleaned up BRs
+
+* Thu Jul  8 2010 Stanislav Ochotnicky <sochotnicky@redhat.com> - 1.0.2-4
+- Add license to javadoc subpackage
+
+* Fri Jun  4 2010 Stanislav Ochotnicky <sochotnicky@redhat.com> - 1.0.2-3
+- Make javadoc subpackage noarch
+
+* Tue Jun  1 2010 Stanislav Ochotnicky <sochotnicky@redhat.com> - 1.0.2-2
+- Fix add_to_maven_depmap call
+- Added depmap for old groupId
+- Unified use of `install`
+
+* Wed May 12 2010 Stanislav Ochotnicky <sochotnicky@redhat.com> - 1.0.2-1
+- Rename and rebase to apache-commons-daemon
+- Get rid of gcj, native conditional compilation
+- Build with maven
+- Update patches to cleanly apply on new version, remove unneeded
+- Clean up whole spec
+
+* Fri Jul 24 2009 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1:1.0.1-8.8
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_12_Mass_Rebuild
+
+* Tue Mar 03 2009 Karsten Hopp <karsten@redhat.com> 1.0.1-7.8
+- ppc needs a similar patch
+
+* Tue Mar 03 2009 Karsten Hopp <karsten@redhat.com> 1.0.1-7.7
+- add configure patch for s390x
+
+* Wed Feb 25 2009 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1:1.0.1-7.6
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_11_Mass_Rebuild
+
+* Wed Jul  9 2008 Tom "spot" Callaway <tcallawa@redhat.com> - 1:1.0.1-6.6
+- drop repotag
+
+* Fri Feb 08 2008 Permaine Cheung <pcheung@redhat.com> - 1:1.0.1-6jpp.5
+- Add configure patch for ia64 from Doug Chapman
+
+* Mon Sep 24 2007 Permaine Cheung <pcheung@redhat.com> - 1:1.0.1-6jpp.4
+- Add execve path warning patch from James Ralston

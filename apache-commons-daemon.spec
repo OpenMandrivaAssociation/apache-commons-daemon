@@ -8,7 +8,7 @@ Release:        4.0%{?dist}
 Summary:        Defines API to support an alternative invocation mechanism
 License:        ASL 2.0
 
-URL:            http://commons.apache.org/%{base_name}
+URL:            https://commons.apache.org/%{base_name}
 Source0:        http://archive.apache.org/dist/commons/%{base_name}/source/%{short_name}-%{version}-src.tar.gz
 Patch1:         apache-commons-daemon-JAVA_OS.patch
 # backport from https://fisheye6.atlassian.com/changelog/commons?cs=1458896

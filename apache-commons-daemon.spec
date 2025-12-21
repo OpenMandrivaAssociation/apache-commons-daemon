@@ -13,6 +13,11 @@ Source0:        http://archive.apache.org/dist/commons/%{base_name}/source/%{sho
 Patch1:         apache-commons-daemon-JAVA_OS.patch
 # backport from https://fisheye6.atlassian.com/changelog/commons?cs=1458896
 Patch2:         apache-commons-daemon-secondary.patch
+BuildRequires:	autoconf
+BuildRequires:	automake
+BuildRequires:	libtool-base
+BuildRequires:	slibtool
+BuildRequires:	make
 BuildRequires:  maven-local
 BuildRequires:  java-devel >= 1:1.6.0
 BuildRequires:  jpackage-utils
